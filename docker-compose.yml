@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+
+  postgres:
+    image: 'postgres:14.0'
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: tripatra123
+      POSTGRES_DB: users
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/
+    networks: 
+      - my-network
+
+  redis:
+    image: redis:6.2
+    restart: always
+    environment:
+      TZ: "Asia/Jakarta"
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./db-data/redis:/data
+    networks: 
+      - my-network
+
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks: 
+      - my-network
+
+  kredit-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DSN=host=postgres user=postgres password=tripatra123 dbname=tripatra port=5432 sslmode=disable
+      - REDIS=redis:6379
+      - MAIL=mailhog
+      - TZ=Asia/Jakarta
+    depends_on:
+      - postgres
+      - redis
+      - mailhog
+    networks: 
+      - my-network
+
+networks:
+  my-network:
