@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"tripatra-api/email"
 	"tripatra-api/helper"
 	"tripatra-api/material"
 	"tripatra-api/transaction"
@@ -65,33 +64,33 @@ func (h *transactionHandler) TransactionSubmission(ctx *gin.Context) {
 		return
 	}
 
-	emailSender, err := h.userService.GetUserByID(newTransaction.SenderID)
-	if err != nil {
-		response := helper.APIResponse("Failed saat insert get emailSender", http.StatusBadRequest, "error", err.Error())
-		ctx.JSON(http.StatusBadRequest, response)
-		return
-	}
+	// emailSender, err := h.userService.GetUserByID(newTransaction.SenderID)
+	// if err != nil {
+	// 	response := helper.APIResponse("Failed saat insert get emailSender", http.StatusBadRequest, "error", err.Error())
+	// 	ctx.JSON(http.StatusBadRequest, response)
+	// 	return
+	// }
 
-	emailReceiver, err := h.userService.GetUserByID(newTransaction.ReceiverID)
-	if err != nil {
-		response := helper.APIResponse("Failed saat insert get emailReceiver", http.StatusBadRequest, "error", err.Error())
-		ctx.JSON(http.StatusBadRequest, response)
-		return
-	}
+	// emailReceiver, err := h.userService.GetUserByID(newTransaction.ReceiverID)
+	// if err != nil {
+	// 	response := helper.APIResponse("Failed saat insert get emailReceiver", http.StatusBadRequest, "error", err.Error())
+	// 	ctx.JSON(http.StatusBadRequest, response)
+	// 	return
+	// }
 
-	materialName, err := h.materialService.FindByID(newTransaction.MaterialID)
-	if err != nil {
-		response := helper.APIResponse("Failed saat insert get materialName", http.StatusBadRequest, "error", err.Error())
-		ctx.JSON(http.StatusBadRequest, response)
-		return
-	}
+	// materialName, err := h.materialService.FindByID(newTransaction.MaterialID)
+	// if err != nil {
+	// 	response := helper.APIResponse("Failed saat insert get materialName", http.StatusBadRequest, "error", err.Error())
+	// 	ctx.JSON(http.StatusBadRequest, response)
+	// 	return
+	// }
 
-	err = email.SendingEmail(emailSender.Email, materialName.Name, emailReceiver.Email)
-	if err != nil {
-		response := helper.APIResponse("Failed saat sending email", http.StatusBadRequest, "error", err.Error())
-		ctx.JSON(http.StatusBadRequest, response)
-		return
-	}
+	// _ = email.SendingEmail(emailSender.Email, materialName.Name, emailReceiver.Email)
+	// if err != nil {
+	// 	response := helper.APIResponse("Failed saat sending email", http.StatusBadRequest, "error", err.Error())
+	// 	ctx.JSON(http.StatusBadRequest, response)
+	// 	return
+	// }
 
 	response := helper.APIResponse("Successfully Submit Transaksi", http.StatusOK, "success", newTransaction)
 
@@ -158,7 +157,7 @@ func (h *transactionHandler) TransactionApproval(ctx *gin.Context) {
 		return
 	}
 
-	_, err = h.transactionService.Update(transactionData.ID, inputApproval.Status)
+	_, err = h.transactionService.Update(transactionData.ID, inputApproval.Status, inputApproval.Reason)
 	if err != nil {
 		response := helper.APIResponse("TransactionApproval Error Saat Update Transaction", http.StatusUnprocessableEntity, "error", err.Error())
 		ctx.JSON(http.StatusUnprocessableEntity, response)

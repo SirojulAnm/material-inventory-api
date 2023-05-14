@@ -38,7 +38,7 @@ func (r *repository) Update(ID int, quantity int) (Material, error) {
 
 func (r *repository) Get() ([]Material, error) {
 	var materials []Material
-	err := r.db.Find(&materials).Error
+	err := r.db.Order("updated_at DESC").Find(&materials).Error
 	if err != nil {
 		return materials, err
 	}

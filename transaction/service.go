@@ -3,7 +3,7 @@ package transaction
 type Service interface {
 	Add(input InputTransaction) (Transaction, error)
 	FindByID(ID int) (Transaction, error)
-	Update(ID int, status string) (Transaction, error)
+	Update(ID int, status string, reason string) (Transaction, error)
 	FindBySender(senderID int) ([]Transaction, error)
 	FindByReceiver(receiverID int) ([]Transaction, error)
 }
@@ -44,8 +44,8 @@ func (s *service) FindByID(ID int) (Transaction, error) {
 	return transaction, nil
 }
 
-func (s *service) Update(ID int, status string) (Transaction, error) {
-	transaction, err := s.repository.Update(ID, status)
+func (s *service) Update(ID int, status string, reason string) (Transaction, error) {
+	transaction, err := s.repository.Update(ID, status, reason)
 	if err != nil {
 		return transaction, err
 	}

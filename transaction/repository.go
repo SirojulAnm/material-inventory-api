@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type Repository interface {
 	Save(material Transaction) (Transaction, error)
 	FindByID(ID int) (Transaction, error)
-	Update(ID int, status string) (Transaction, error)
+	Update(ID int, status string, reason string) (Transaction, error)
 	FindBySender(senderID int) ([]Transaction, error)
 	FindByReceiver(receiverID int) ([]Transaction, error)
 }
@@ -37,9 +37,9 @@ func (r *repository) FindByID(ID int) (Transaction, error) {
 	return transaction, nil
 }
 
-func (r *repository) Update(ID int, status string) (Transaction, error) {
+func (r *repository) Update(ID int, status string, reason string) (Transaction, error) {
 	var transaction Transaction
-	err := r.db.Model(&transaction).Where("id = ?", ID).Updates(Transaction{Status: status}).Error
+	err := r.db.Model(&transaction).Where("id = ?", ID).Updates(Transaction{Status: status, Reason: reason}).Error
 	if err != nil {
 		return transaction, err
 	}
@@ -49,7 +49,7 @@ func (r *repository) Update(ID int, status string) (Transaction, error) {
 
 func (r *repository) FindBySender(senderID int) ([]Transaction, error) {
 	var transactions []Transaction
-	err := r.db.Order("updated_at DESC").Preload("Material").Where("sender_id = ?", senderID).Find(&transactions).Error
+	err := r.db.Order("updated_at DESC").Not("status = ?", "deleted").Preload("Material").Where("sender_id = ?", senderID).Find(&transactions).Error
 	if err != nil {
 		return transactions, err
 	}
@@ -59,7 +59,7 @@ func (r *repository) FindBySender(senderID int) ([]Transaction, error) {
 
 func (r *repository) FindByReceiver(receiverID int) ([]Transaction, error) {
 	var transactions []Transaction
-	err := r.db.Preload("Material").Where("receiver_id = ?", receiverID).Find(&transactions).Error
+	err := r.db.Order("updated_at DESC").Not("status = ?", "deleted").Preload("Material").Where("receiver_id = ?", receiverID).Find(&transactions).Error
 	if err != nil {
 		return transactions, err
 	}

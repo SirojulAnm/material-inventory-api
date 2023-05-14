@@ -12,5 +12,6 @@ type InputTransaction struct {
 
 type InputApproval struct {
 	Status        string `json:"status" binding:"required"`
+	Reason        string `json:"reason" binding:"required"`
 	TransactionID int    `json:"transaction_id" binding:"required"`
 }
