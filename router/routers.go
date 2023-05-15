@@ -10,6 +10,7 @@ import (
 func Router(DB *gorm.DB) error {
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
+	router.Static("/images", "./images")
 	corsConfig(router)
 
 	v1 := router.Group("v1")
