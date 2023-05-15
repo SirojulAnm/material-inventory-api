@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"tripatra-api/email"
 	"tripatra-api/helper"
 	"tripatra-api/material"
 	"tripatra-api/transaction"
@@ -33,25 +34,25 @@ func (h *transactionHandler) TransactionSubmission(ctx *gin.Context) {
 		return
 	}
 
-	cekWarehouseStatus := false
-	if inputTransaction.WarehouseCategory == transaction.AddWarehouse {
-		cekWarehouseStatus = true
-	} else if inputTransaction.WarehouseCategory == transaction.TakeWarehouse {
-		cekWarehouseStatus = true
-	}
+	// cekWarehouseStatus := false
+	// if inputTransaction.WarehouseCategory == transaction.AddWarehouse {
+	// 	cekWarehouseStatus = true
+	// } else if inputTransaction.WarehouseCategory == transaction.TakeWarehouse {
+	// 	cekWarehouseStatus = true
+	// }
 
-	if !cekWarehouseStatus {
-		response := helper.APIResponse("Transaction Error WarehouseCategory tidak dikenal", http.StatusUnprocessableEntity, "error", nil)
-		ctx.JSON(http.StatusUnprocessableEntity, response)
-		return
-	}
+	// if !cekWarehouseStatus {
+	// 	response := helper.APIResponse("Transaction Error WarehouseCategory tidak dikenal", http.StatusUnprocessableEntity, "error", nil)
+	// 	ctx.JSON(http.StatusUnprocessableEntity, response)
+	// 	return
+	// }
 
-	material, err := h.materialService.FindByID(inputTransaction.MaterialID)
-	if material.ID == 0 {
-		response := helper.APIResponse("TransactionApproval Error, Material No matching records found", http.StatusUnprocessableEntity, "error", nil)
-		ctx.JSON(http.StatusUnprocessableEntity, response)
-		return
-	}
+	// material, err := h.materialService.FindByID(inputTransaction.MaterialID)
+	// if material.ID == 0 {
+	// 	response := helper.APIResponse("TransactionApproval Error, Material No matching records found", http.StatusUnprocessableEntity, "error", nil)
+	// 	ctx.JSON(http.StatusUnprocessableEntity, response)
+	// 	return
+	// }
 
 	currentUser := ctx.MustGet("currentUser").(user.User)
 
@@ -64,33 +65,33 @@ func (h *transactionHandler) TransactionSubmission(ctx *gin.Context) {
 		return
 	}
 
-	// emailSender, err := h.userService.GetUserByID(newTransaction.SenderID)
-	// if err != nil {
-	// 	response := helper.APIResponse("Failed saat insert get emailSender", http.StatusBadRequest, "error", err.Error())
-	// 	ctx.JSON(http.StatusBadRequest, response)
-	// 	return
-	// }
+	emailSender, err := h.userService.GetUserByID(newTransaction.SenderID)
+	if err != nil {
+		response := helper.APIResponse("Failed saat insert get emailSender", http.StatusBadRequest, "error", err.Error())
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
 
-	// emailReceiver, err := h.userService.GetUserByID(newTransaction.ReceiverID)
-	// if err != nil {
-	// 	response := helper.APIResponse("Failed saat insert get emailReceiver", http.StatusBadRequest, "error", err.Error())
-	// 	ctx.JSON(http.StatusBadRequest, response)
-	// 	return
-	// }
+	emailReceiver, err := h.userService.GetUserByID(newTransaction.ReceiverID)
+	if err != nil {
+		response := helper.APIResponse("Failed saat insert get emailReceiver", http.StatusBadRequest, "error", err.Error())
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
 
-	// materialName, err := h.materialService.FindByID(newTransaction.MaterialID)
-	// if err != nil {
-	// 	response := helper.APIResponse("Failed saat insert get materialName", http.StatusBadRequest, "error", err.Error())
-	// 	ctx.JSON(http.StatusBadRequest, response)
-	// 	return
-	// }
+	materialName, err := h.materialService.FindByID(newTransaction.MaterialID)
+	if err != nil {
+		response := helper.APIResponse("Failed saat insert get materialName", http.StatusBadRequest, "error", err.Error())
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
 
-	// _ = email.SendingEmail(emailSender.Email, materialName.Name, emailReceiver.Email)
-	// if err != nil {
-	// 	response := helper.APIResponse("Failed saat sending email", http.StatusBadRequest, "error", err.Error())
-	// 	ctx.JSON(http.StatusBadRequest, response)
-	// 	return
-	// }
+	err = email.SendingEmail(emailReceiver.Email, materialName.Name, emailSender.Email)
+	if err != nil {
+		response := helper.APIResponse("Failed saat sending email", http.StatusBadRequest, "error", err.Error())
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
 
 	response := helper.APIResponse("Successfully Submit Transaksi", http.StatusOK, "success", newTransaction)
 

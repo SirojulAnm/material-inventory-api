@@ -2,61 +2,71 @@ package email
 
 import (
 	"fmt"
-	"html/template"
 	"log"
+	"net/mail"
 	"net/smtp"
+	"net/textproto"
 	"os"
-	"strings"
 )
 
 func SendingEmail(ReceiverEmail string, MaterialName string, SenderEmail string) error {
-	// Set up MailHog configuration
-	// smtpHost := "localhost"
-	smtpHost := os.Getenv("MAIL")
-	smtpPort := "1025"
-	auth := smtp.PlainAuth("", "", "", smtpHost)
+	smtpServer := os.Getenv("MAILHOG")
 
-	data := struct {
-		Receiver string
-		Material string
-		Sender   string
-	}{
-		Receiver: ReceiverEmail,
-		Material: MaterialName,
-		Sender:   SenderEmail,
+	// Create the email message
+	from := mail.Address{Address: SenderEmail}
+	to := mail.Address{Address: ReceiverEmail}
+	subject := "Notification From MIS!"
+	body := fmt.Sprintf(`<!DOCTYPE html>
+		<html>
+		<head>
+			<title>Notification From MIS!</title>
+		</head>
+		<body>
+			<h2>Hello, %s!</h2>
+			<p>Please approve the submission of items transaction materials <b>%s</b> by the user <u>%s</u></p>
+			<p><br></p>
+			<p>Thank You</p>
+		</body>
+		</html>
+	`, ReceiverEmail, MaterialName, SenderEmail)
+
+	// Compose the MIME message
+	header := make(textproto.MIMEHeader)
+	header.Set("From", from.String())
+	header.Set("To", to.String())
+	header.Set("Subject", subject)
+	header.Set("Content-Type", "text/html")
+
+	message := ""
+	for k, v := range header {
+		message += fmt.Sprintf("%s: %s\r\n", k, v[0])
 	}
+	message += "\r\n" + body
 
-	bodyTemplate := `<!DOCTYPE html>
-	<html>
-	<head>
-		<title>Notification From MIS!</title>
-	</head>
-	<body>
-		<h1>Hello, {{.Receiver}}!</h1>
-		<p>Please approve the submission of items transaction <b>{{.Material}}</b> by the user <u>{{.Sender}}</u></p>
-		<p></p>
-		<p>Thank You</p>
-	</body>
-	</html>
-	`
-
-	bodyMessage := new(strings.Builder)
-	tmpl := template.Must(template.New("bodyTemplate").Parse(bodyTemplate))
-	err := tmpl.Execute(bodyMessage, data)
+	// Dial the SMTP server
+	client, err := smtp.Dial(smtpServer)
 	if err != nil {
-		log.Printf("faile saat Execute body email %s", err.Error())
 		return err
 	}
+	defer client.Close()
 
-	from := SenderEmail
-	to := []string{ReceiverEmail}
-	subject := "Notification From MIS!"
-
-	auth = smtp.PlainAuth("", "", "", smtpHost)
-	msg := []byte(fmt.Sprintf("To: %s\r\nSubject: %s\r\nContent-Type: text/html\r\n\r\n%s", strings.Join(to, ","), subject, bodyMessage.String()))
-	err = smtp.SendMail(fmt.Sprintf("%s:%s", smtpHost, smtpPort), auth, from, to, msg)
+	// Send the email
+	if err = client.Mail(from.Address); err != nil {
+		return err
+	}
+	if err = client.Rcpt(to.Address); err != nil {
+		return err
+	}
+	writer, err := client.Data()
 	if err != nil {
-		log.Printf("faile saat send email %s", err.Error())
+		return err
+	}
+	_, err = writer.Write([]byte(message))
+	if err != nil {
+		return err
+	}
+	err = writer.Close()
+	if err != nil {
 		return err
 	}
 
