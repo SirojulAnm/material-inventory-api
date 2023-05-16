@@ -326,7 +326,7 @@
 			"response": []
 		},
 		{
-			"name": "Materials Copy",
+			"name": "Materials",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -354,6 +354,38 @@
 					}
 				},
 				"url": "{{local}}/v1/materials"
+			},
+			"response": []
+		},
+		{
+			"name": "Transaction ID",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{auth}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{local}}/v1/transaction/136"
 			},
 			"response": []
 		}
