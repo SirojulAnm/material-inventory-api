@@ -12,7 +12,7 @@
  Target Server Version : 140000
  File Encoding         : 65001
 
- Date: 11/05/2023 23:21:37
+ Date: 16/05/2023 22:18:02
 */
 
 
@@ -147,7 +147,7 @@ ALTER TABLE "public"."users" OWNER TO "postgres";
 -- ----------------------------
 ALTER SEQUENCE "public"."materials_id_seq"
 OWNED BY "public"."materials"."id";
-SELECT setval('"public"."materials_id_seq"', 2, true);
+SELECT setval('"public"."materials_id_seq"', 16, true);
 
 -- ----------------------------
 -- Alter sequences owned by
@@ -162,12 +162,12 @@ SELECT setval('"public"."my_table_id_seq1"', 1, false);
 -- ----------------------------
 -- Alter sequences owned by
 -- ----------------------------
-SELECT setval('"public"."my_table_id_seq2"', 80, true);
+SELECT setval('"public"."my_table_id_seq2"', 141, true);
 
 -- ----------------------------
 -- Alter sequences owned by
 -- ----------------------------
-SELECT setval('"public"."my_table_id_seq3"', 1, false);
+SELECT setval('"public"."my_table_id_seq3"', 6, true);
 
 -- ----------------------------
 -- Primary Key structure for table materials
