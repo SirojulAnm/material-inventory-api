@@ -29,7 +29,7 @@ func (r *repository) Save(transaction Transaction) (Transaction, error) {
 
 func (r *repository) FindByID(ID int) (Transaction, error) {
 	var transaction Transaction
-	err := r.db.Where("id = ?", ID).Find(&transaction).Error
+	err := r.db.Preload("Material").Where("id = ?", ID).Find(&transaction).Error
 	if err != nil {
 		return transaction, err
 	}

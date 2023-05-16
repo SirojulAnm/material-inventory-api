@@ -4,6 +4,7 @@ import (
 	"tripatra-api/auth"
 	"tripatra-api/handler"
 	"tripatra-api/material"
+	"tripatra-api/notification"
 	"tripatra-api/transaction"
 	"tripatra-api/user"
 
@@ -15,14 +16,17 @@ func TransactionRouter(db *gorm.DB, main *gin.RouterGroup) {
 	userRepository := user.NewRepository(db)
 	transaksiRepository := transaction.NewRepository(db)
 	materialRepository := material.NewRepository(db)
+	notificationRepository := notification.NewRepository(db)
 
 	authService := auth.NewService()
 	userService := user.NewService(userRepository)
 	transaksiService := transaction.NewService(transaksiRepository)
 	materialService := material.NewService(materialRepository)
+	notificationService := notification.NewService(notificationRepository)
 
-	transaksiHandler := handler.NewTransactionHandler(userService, transaksiService, materialService)
+	transaksiHandler := handler.NewTransactionHandler(userService, transaksiService, materialService, notificationService)
 
+	main.GET("/transaction/:id", authMiddleware(userService, authService), transaksiHandler.TransactionID)
 	main.POST("/transaction-submit", authMiddleware(userService, authService), transaksiHandler.TransactionSubmission)
 	main.POST("/transaction-approval", authMiddleware(userService, authService), transaksiHandler.TransactionApproval)
 	main.GET("/submission-list", authMiddleware(userService, authService), transaksiHandler.SubmissionList)

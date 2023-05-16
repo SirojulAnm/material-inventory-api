@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func SendingEmail(ReceiverEmail string, MaterialName string, SenderEmail string) error {
+func SendingEmail(SenderEmail string, MaterialName string, ReceiverEmail string) error {
 	smtpServer := os.Getenv("MAILHOG")
 
 	// Create the email message

@@ -1,6 +1,8 @@
 package material
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Repository interface {
 	Save(material Material) (Material, error)
@@ -28,7 +30,7 @@ func (r *repository) Save(material Material) (Material, error) {
 
 func (r *repository) Update(ID int, quantity int) (Material, error) {
 	var material Material
-	err := r.db.Model(&material).Where("id = ?", ID).Updates(Material{Quantity: quantity}).Error
+	err := r.db.Model(&material).Where("id = ?", ID).Update("quantity", quantity).Error
 	if err != nil {
 		return material, err
 	}

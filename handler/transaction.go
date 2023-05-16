@@ -2,9 +2,11 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"tripatra-api/email"
 	"tripatra-api/helper"
 	"tripatra-api/material"
+	"tripatra-api/notification"
 	"tripatra-api/transaction"
 	"tripatra-api/user"
 
@@ -12,13 +14,14 @@ import (
 )
 
 type transactionHandler struct {
-	userService        user.Service
-	transactionService transaction.Service
-	materialService    material.Service
+	userService         user.Service
+	transactionService  transaction.Service
+	materialService     material.Service
+	notificationService notification.Service
 }
 
-func NewTransactionHandler(userService user.Service, transactionService transaction.Service, materialService material.Service) *transactionHandler {
-	return &transactionHandler{userService, transactionService, materialService}
+func NewTransactionHandler(userService user.Service, transactionService transaction.Service, materialService material.Service, notificationService notification.Service) *transactionHandler {
+	return &transactionHandler{userService, transactionService, materialService, notificationService}
 }
 
 func (h *transactionHandler) TransactionSubmission(ctx *gin.Context) {
@@ -34,25 +37,25 @@ func (h *transactionHandler) TransactionSubmission(ctx *gin.Context) {
 		return
 	}
 
-	// cekWarehouseStatus := false
-	// if inputTransaction.WarehouseCategory == transaction.AddWarehouse {
-	// 	cekWarehouseStatus = true
-	// } else if inputTransaction.WarehouseCategory == transaction.TakeWarehouse {
-	// 	cekWarehouseStatus = true
-	// }
+	cekWarehouseStatus := false
+	if inputTransaction.WarehouseCategory == transaction.AddWarehouse {
+		cekWarehouseStatus = true
+	} else if inputTransaction.WarehouseCategory == transaction.TakeWarehouse {
+		cekWarehouseStatus = true
+	}
 
-	// if !cekWarehouseStatus {
-	// 	response := helper.APIResponse("Transaction Error WarehouseCategory tidak dikenal", http.StatusUnprocessableEntity, "error", nil)
-	// 	ctx.JSON(http.StatusUnprocessableEntity, response)
-	// 	return
-	// }
+	if !cekWarehouseStatus {
+		response := helper.APIResponse("Transaction Error WarehouseCategory tidak dikenal", http.StatusUnprocessableEntity, "error", nil)
+		ctx.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
 
-	// material, err := h.materialService.FindByID(inputTransaction.MaterialID)
-	// if material.ID == 0 {
-	// 	response := helper.APIResponse("TransactionApproval Error, Material No matching records found", http.StatusUnprocessableEntity, "error", nil)
-	// 	ctx.JSON(http.StatusUnprocessableEntity, response)
-	// 	return
-	// }
+	material, err := h.materialService.FindByID(inputTransaction.MaterialID)
+	if material.ID == 0 {
+		response := helper.APIResponse("TransactionApproval Error, Material No matching records found", http.StatusUnprocessableEntity, "error", nil)
+		ctx.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
 
 	currentUser := ctx.MustGet("currentUser").(user.User)
 
@@ -86,10 +89,23 @@ func (h *transactionHandler) TransactionSubmission(ctx *gin.Context) {
 		return
 	}
 
-	err = email.SendingEmail(emailReceiver.Email, materialName.Name, emailSender.Email)
+	err = email.SendingEmail(emailSender.Email, materialName.Name, emailReceiver.Email)
 	if err != nil {
 		response := helper.APIResponse("Failed saat sending email", http.StatusBadRequest, "error", err.Error())
 		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	inputNotif := notification.InputNotification{}
+	inputNotif.MaterialID = materialName.ID
+	inputNotif.Message = "Notification From MIS!"
+	inputNotif.SenderID = emailSender.ID
+	inputNotif.ReceiverID = emailReceiver.ID
+
+	_, err = h.notificationService.Add(inputNotif)
+	if err != nil {
+		response := helper.APIResponse("Failed saat save notif", http.StatusUnprocessableEntity, "error", err.Error())
+		ctx.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
 
@@ -146,6 +162,9 @@ func (h *transactionHandler) TransactionApproval(ctx *gin.Context) {
 	}
 	if inputApproval.Status == transaction.StatusUpdated && transactionData.WarehouseCategory == transaction.TakeWarehouse {
 		resutQuantity = materialData.Quantity - transactionData.Quantity
+		if resutQuantity < 0 {
+			resutQuantity = 0
+		}
 	}
 	if inputApproval.Status != transaction.StatusUpdated {
 		resutQuantity = materialData.Quantity
@@ -261,6 +280,34 @@ func (h *transactionHandler) WarehouseOfficer(ctx *gin.Context) {
 	}
 
 	response := helper.APIResponse("Successfully get WarehouseOfficer", http.StatusOK, "success", materials)
+
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (h *transactionHandler) TransactionID(ctx *gin.Context) {
+	ID := ctx.Param("id")
+
+	if ID == "" {
+		response := helper.APIResponse("ID parameter is missing", http.StatusBadRequest, "error", nil)
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	id, err := strconv.Atoi(ID)
+	if err != nil {
+		response := helper.APIResponse("ID parameter is missing", http.StatusBadRequest, "error", err.Error())
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	result, err := h.transactionService.FindByID(id)
+	if err != nil {
+		response := helper.APIResponse("ID parameter is missing", http.StatusUnprocessableEntity, "error", err.Error())
+		ctx.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	response := helper.APIResponse("Successfully get Transaction", http.StatusOK, "success", result)
 
 	ctx.JSON(http.StatusOK, response)
 }
